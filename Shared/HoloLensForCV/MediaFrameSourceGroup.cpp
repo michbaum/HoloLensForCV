@@ -215,7 +215,7 @@ namespace HoloLensForCV
         Windows::Perception::Spatial::SpatialCoordinateSystem^ unitySpatialCoordinateSystem)
     {
         // Initialize the Kalman filter
-        //initKalmanFilter(_KF, _nStates, _nMeasurements, _nInputs, _dt);    // init function
+        initKalmanFilter(_KF, _nStates, _nMeasurements, _nInputs, _dt);    // init function
 
         // Instantiate aruco marker tracker class with parameters.
         return concurrency::create_async(
@@ -240,47 +240,47 @@ namespace HoloLensForCV
         auto detections = _arUcoMarkerTracker->DetectArUcoMarkersInFrame(frame);
         //_detections = _arUcoMarkerTracker->DetectArUcoMarkersInFrame(frame);
 
-        //// Filter the detections using Kalman filter
-        //// TODO: integrate into ArUcoMarkerTracker class
-        //for each (auto detection in detections)
-        //{
-        //    cv::Mat measurements;
-        //    cv::Mat translation_measured(3, 1, CV_64F);
-        //    cv::Mat rotation_measured(3, 1, CV_64F);
-        //    cv::Mat rotation_measured_mat(3, 3, CV_64F);
+        // Filter the detections using Kalman filter
+        // TODO: integrate into ArUcoMarkerTracker class
+        for each (auto detection in detections)
+        {
+            cv::Mat measurements(6, 1, CV_64F);
+            cv::Mat translation_measured(3, 1, CV_64F);
+            cv::Mat rotation_measured(3, 1, CV_64F);
+            cv::Mat rotation_measured_mat(3, 3, CV_64F);
 
-        //    translation_measured.at<double>(0, 0) = (double)detection->Position.x;
-        //    translation_measured.at<double>(1, 0) = (double)detection->Position.y;
-        //    translation_measured.at<double>(2, 0) = (double)detection->Position.z;
+            translation_measured.at<double>(0, 0) = (double)detection->Position.x;
+            translation_measured.at<double>(1, 0) = (double)detection->Position.y;
+            translation_measured.at<double>(2, 0) = (double)detection->Position.z;
 
-        //    // Euler rotation
-        //    rotation_measured.at<double>(0, 0) = (double)detection->Rotation.x;
-        //    rotation_measured.at<double>(1, 0) = (double)detection->Rotation.y;
-        //    rotation_measured.at<double>(2, 0) = (double)detection->Rotation.z;
+            // Euler rotation
+            rotation_measured.at<double>(0, 0) = (double)detection->Rotation.x;
+            rotation_measured.at<double>(1, 0) = (double)detection->Rotation.y;
+            rotation_measured.at<double>(2, 0) = (double)detection->Rotation.z;
 
-        //    cv::Rodrigues(rotation_measured, rotation_measured_mat);
-        //    fillMeasurements(measurements, translation_measured, rotation_measured_mat);
+            cv::Rodrigues(rotation_measured, rotation_measured_mat);
+            fillMeasurements(measurements, translation_measured, rotation_measured_mat);
 
-        //    // Instantiate estimated translation and rotation
-        //    cv::Mat translation_estimated(3, 1, CV_64F);
-        //    cv::Mat rotation_estimated(3, 3, CV_64F);
-        //    cv::Mat rotation_estimated_euler(3, 1, CV_64F);
+            // Instantiate estimated translation and rotation
+            cv::Mat translation_estimated(3, 1, CV_64F);
+            cv::Mat rotation_estimated(3, 3, CV_64F);
+            cv::Mat rotation_estimated_euler(3, 1, CV_64F);
 
-        //    // update the Kalman filter with good measurements
-        //    updateKalmanFilter(_KF, measurements, translation_estimated, rotation_estimated);
+            // update the Kalman filter with good measurements
+            updateKalmanFilter(_KF, measurements, translation_estimated, rotation_estimated);
 
-        //    detection->Position = Windows::Foundation::Numerics::float3(
-        //        (float)translation_estimated.at<double>(0,0),
-        //        (float)translation_estimated.at<double>(1,0),
-        //        (float)translation_estimated.at<double>(2,0));
+            detection->Position = Windows::Foundation::Numerics::float3(
+                (float)translation_estimated.at<double>(0,0),
+                (float)translation_estimated.at<double>(1,0),
+                (float)translation_estimated.at<double>(2,0));
 
-        //    // Convert to euler representation
-        //    cv::Rodrigues(rotation_measured, rotation_estimated_euler);
-        //    detection->Rotation = Windows::Foundation::Numerics::float3(
-        //        (float)rotation_estimated_euler.at<double>(0, 0),
-        //        (float)rotation_estimated_euler.at<double>(1, 0),
-        //        (float)rotation_estimated_euler.at<double>(2, 0));
-        //}
+            // Convert to euler representation
+            cv::Rodrigues(rotation_measured, rotation_estimated_euler);
+            detection->Rotation = Windows::Foundation::Numerics::float3(
+                (float)rotation_estimated_euler.at<double>(0, 0),
+                (float)rotation_estimated_euler.at<double>(1, 0),
+                (float)rotation_estimated_euler.at<double>(2, 0));
+        }
 
         return detections;
     }
